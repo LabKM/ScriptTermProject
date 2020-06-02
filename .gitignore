@@ -1,0 +1,5 @@
+/ScriptTermProject/.vs/ScriptTermProject/v16/*.suo
+/ScriptTermProject/*.pyproj
+*.suo
+*.pyc
+/ScriptTermProject/env
