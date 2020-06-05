@@ -8,10 +8,12 @@
 # 4. 국회의원 사무실로 이메일 전송
 # 5. 국회의원 자기 지역구 이외에도 자신이 원하는 국회의원들 관심 등록 기능
 
-from tkinter import *
+import tkinter as tk
 import urllib
 import requests
 import xml.etree.ElementTree as ET
+from PIL import ImageTk, Image
+from io import BytesIO
 
 def get_request_query(url, operation, params, serviceKey):
     import urllib.parse as urlparse
@@ -19,6 +21,9 @@ def get_request_query(url, operation, params, serviceKey):
     request_query = url + '/' + operation + '?' + params + '&' + 'serviceKey' + '=' + serviceKey
     return request_query
 
+def get_request_image(url, file_name):
+    r = requests.get(url=url)
+    return r.content
 
 class Member:
     def __init__(self, item):
@@ -26,10 +31,11 @@ class Member:
 
 
 class MainApp():
-    def __init__(self, root):
-        self.window = root
+    def __init__(self):
+        self.window = tk.Tk()
         self.window.title("우리 동네 국회의원")
-        self.frame0 = Frame(root)
+        self.window.geometry("640x480")
+        self.frame0 = tk.Frame(self.window)
         self.frame0.grid(row=0,column=0)
         self.frames = []
         
@@ -46,35 +52,54 @@ class MainApp():
 
         self.member_tree = ET.fromstring(response.text).find("body").find("items")
 
-        Button(self.frame0,text="Search",command=lambda X=0: self.pressed(X)).pack(side=LEFT)
-        self.frames.append(Frame(self.window))
+        tk.Button(self.frame0,text="Home",command=lambda X=0: self.pressed(X)).pack(side=tk.LEFT)
+        self.frames.append(tk.Frame(self.window))
         self.frames[-1].grid(row=1, column=0)
-        self._0_location_member = StringVar()
-        self._0_textbox = Entry(self.frames[-1], textvariable=self._0_location_member)
+        self._0_textbox = tk.Entry(self.frames[-1])
+        self._0_textbox.insert(0, "지역구를 입력하세요")
+        self._0_textbox.bind("<Button-1>", lambda event: self._0_textbox.delete(0, tk.END)) 
+        self._0_textbox.bind("<Return>", lambda event: self.search_member_show_list()) 
         self._0_textbox.grid(row=0,column=0) 
-        self._0_textbox = Button(self.frames[-1], text="검색", command=self.search_member_show_list)
-        self._0_textbox.grid(row=0,column=1) 
-        self._0_listbox = Listbox(self.frames[-1])
+        self._0_textbox_result = tk.Button(self.frames[-1], text="검색", command=self.search_member_show_list)
+        self._0_textbox_result.grid(row=0,column=1) 
+        self._0_listbox = tk.Listbox(self.frames[-1])
         self._0_listbox.grid(row=1,column=0) 
 
+        temp = Image.open("AsteroidSprite.png")
+        photoimg = ImageTk.PhotoImage(temp)
+        self.face_photo = tk.Label(self.frames[-1], image=photoimg)
+        self.face_photo.grid(row=1, column=2)
+
+        self.set_image_label('a')
+
+        self.window.mainloop()
     def pressed(self, i):
         self.frames[i].tkraise()
 
-    def show_member(self, name):
+    def show_detail_member(self, index):
         pass
 
     def search_member_show_list(self):
         self._0_listbox.delete(0, END)
         cnt = 0
+        location = self._0_textbox.get()
         for item in self.member_tree:
             origNm = item.find("origNm").text
-            if self._0_location_member.get() in origNm:
+            if location in origNm:
                 self._0_listbox.insert(cnt, origNm + ":" + item.find('empNm').text)
                 cnt+=1
+                print(item.find("jpgLink").text)
+
+    def set_image_label(self, url):
+        r = urllib.request.urlopen("http://www.assembly.go.kr/photo/9770956.jpg").read()
+        temp = Image.open(BytesIO(r))
+        photo = ImageTk.PhotoImage(temp)
+        self.face_photo.configure(image=photo)
+        self.face_photo.image = photo
         
 
-root = Tk()
-MainApp(root)
-root.mainloop()
+#root = Tk()
+some = MainApp()
+#root.mainloop()
 
 
