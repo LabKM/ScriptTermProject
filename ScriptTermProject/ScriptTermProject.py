@@ -70,28 +70,39 @@ class MainApp():
         self.face_photo = tk.Label(self.frames[-1], image=photoimg)
         self.face_photo.grid(row=1, column=2)
 
-        self.set_image_label('a')
+        self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
+        self._0_detail_button.grid(row=2, column=0)
 
         self.window.mainloop()
     def pressed(self, i):
         self.frames[i].tkraise()
 
-    def show_detail_member(self, index):
+    def show_detail_member(self):
+        try:
+            select = self._0_listbox.curselection()[0]
+            info = self._0_listbox.get(select)
+            for item in self.member_tree:
+                origNm = item.find("origNm").text
+                if origNm == info:
+                    self.set_image_label(item.find("jpgLink").text)
+        except:
+            print("empty")
+
+    def show_member(self):
         pass
 
     def search_member_show_list(self):
-        self._0_listbox.delete(0, END)
+        self._0_listbox.delete(0, tk.END)
         cnt = 0
         location = self._0_textbox.get()
         for item in self.member_tree:
             origNm = item.find("origNm").text
             if location in origNm:
-                self._0_listbox.insert(cnt, origNm + ":" + item.find('empNm').text)
+                self._0_listbox.insert(cnt, origNm)
                 cnt+=1
-                print(item.find("jpgLink").text)
 
     def set_image_label(self, url):
-        r = urllib.request.urlopen("http://www.assembly.go.kr/photo/9770956.jpg").read()
+        r = urllib.request.urlopen(url).read()
         temp = Image.open(BytesIO(r))
         photo = ImageTk.PhotoImage(temp)
         self.face_photo.configure(image=photo)
