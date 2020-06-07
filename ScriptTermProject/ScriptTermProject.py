@@ -70,6 +70,9 @@ class MainApp():
         self.face_photo = tk.Label(self.frames[-1], image=photoimg)
         self.face_photo.grid(row=1, column=2)
 
+        self.info_label= tk.Label(self.frames[-1])
+        self.info_label.grid(row=2, column=2)
+
         self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
         self._0_detail_button.grid(row=2, column=0)
 
@@ -78,18 +81,26 @@ class MainApp():
         self.frames[i].tkraise()
 
     def show_detail_member(self):
-        try:
-            select = self._0_listbox.curselection()[0]
+        select = self._0_listbox.curselection()
+        if len(select) > 0:
             info = self._0_listbox.get(select)
             for item in self.member_tree:
                 origNm = item.find("origNm").text
                 if origNm == info:
                     self.set_image_label(item.find("jpgLink").text)
-        except:
-            print("empty")
+                    self.info_label['text'] = item.find("empNm").text + '(' + item.find("engNm").text + ')\n' + origNm \
+                        + '\n' + item.find("reeleGbnNm").text
+
 
     def show_member(self):
-        pass
+        select = self._0_listbox.curselection()
+        if len(select) > 0 and self.select != select[0]:
+            info = self._0_listbox.get(select)
+            for item in self.member_tree:
+                origNm = item.find("origNm").text
+                if origNm == info:
+                    self.set_image_label(item.find("jpgLink").text)
+                    break
 
     def search_member_show_list(self):
         self._0_listbox.delete(0, tk.END)
