@@ -53,6 +53,14 @@ class MainApp():
         self.member_tree = ET.fromstring(response.text).find("body").find("items")
 
         tk.Button(self.frame0,text="Home",command=lambda X=0: self.pressed(X)).pack(side=tk.LEFT)
+        self.set_frame_search()
+        self.set_frame_show_info()
+
+        self.frames[0].tkraise()
+
+        self.window.mainloop()
+
+    def set_frame_search(self):
         self.frames.append(tk.Frame(self.window))
         self.frames[-1].grid(row=1, column=0)
         self._0_textbox = tk.Entry(self.frames[-1])
@@ -64,23 +72,24 @@ class MainApp():
         self._0_textbox_result.grid(row=0,column=1) 
         self._0_listbox = tk.Listbox(self.frames[-1])
         self._0_listbox.grid(row=1,column=0) 
+        self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
+        self._0_detail_button.grid(row=2, column=0)
 
-        temp = Image.open("AsteroidSprite.png")
-        photoimg = ImageTk.PhotoImage(temp)
+    def set_frame_show_info(self):
+        self.frames.append(tk.Frame(self.window))
+        self.frames[-1].grid(row=1, column=0)
+        photoimg = ImageTk.PhotoImage(file = "AsteroidSprite.png")
         self.face_photo = tk.Label(self.frames[-1], image=photoimg)
         self.face_photo.grid(row=1, column=2)
 
         self.info_label= tk.Label(self.frames[-1])
         self.info_label.grid(row=2, column=2)
 
-        self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
-        self._0_detail_button.grid(row=2, column=0)
-
-        self.window.mainloop()
     def pressed(self, i):
         self.frames[i].tkraise()
 
     def show_detail_member(self):
+        self.frames[1].tkraise()
         select = self._0_listbox.curselection()
         if len(select) > 0:
             info = self._0_listbox.get(select)
@@ -90,16 +99,6 @@ class MainApp():
                     self.set_image_label(item.find("jpgLink").text)
                     self.info_label['text'] = item.find("empNm").text + '(' + item.find("engNm").text + ')\n' + origNm \
                         + '\n' + item.find("reeleGbnNm").text
-
-
-    def show_member(self):
-        select = self._0_listbox.curselection()
-        if len(select) > 0 and self.select != select[0]:
-            info = self._0_listbox.get(select)
-            for item in self.member_tree:
-                origNm = item.find("origNm").text
-                if origNm == info:
-                    self.set_image_label(item.find("jpgLink").text)
                     break
 
     def search_member_show_list(self):
