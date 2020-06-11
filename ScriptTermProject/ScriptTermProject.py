@@ -52,11 +52,14 @@ class MainApp():
 
         self.member_tree = ET.fromstring(response.text).find("body").find("items")
 
-        tk.Button(self.frame0,text="Home",command=lambda X=0: self.pressed(X)).pack(side=tk.LEFT)
+        tk.Button(self.frame0,text="Home",command=lambda X=0: self.frame_change(X)).pack(side=tk.LEFT)
+
+        self.now_frame = 0
         self.set_frame_search()
         self.set_frame_show_info()
 
-        self.frames[0].tkraise()
+        self.frames[self.now_frame].grid()
+        self.frames[self.now_frame].tkraise()
 
         self.window.mainloop()
 
@@ -74,6 +77,7 @@ class MainApp():
         self._0_listbox.grid(row=1,column=0) 
         self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
         self._0_detail_button.grid(row=2, column=0)
+        self.frames[-1].grid_remove()
 
     def set_frame_show_info(self):
         self.frames.append(tk.Frame(self.window))
@@ -81,15 +85,18 @@ class MainApp():
         photoimg = ImageTk.PhotoImage(file = "AsteroidSprite.png")
         self.face_photo = tk.Label(self.frames[-1], image=photoimg)
         self.face_photo.grid(row=1, column=2)
-
         self.info_label= tk.Label(self.frames[-1])
         self.info_label.grid(row=2, column=2)
+        self.frames[-1].grid_remove()
 
-    def pressed(self, i):
-        self.frames[i].tkraise()
+    def frame_change(self, i):
+        self.frames[self.now_frame].grid_remove()
+        self.frames[i].grid()
+        self.now_frame = i
+        self.frames[self.now_frame].tkraise()
 
     def show_detail_member(self):
-        self.frames[1].tkraise()
+        self.frame_change(1)
         select = self._0_listbox.curselection()
         if len(select) > 0:
             info = self._0_listbox.get(select)
