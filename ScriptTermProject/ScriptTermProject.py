@@ -25,10 +25,10 @@ def get_request_image(url, file_name):
     r = requests.get(url=url)
     return r.content
 
-class Member:
-    def __init__(self, item):
-        self.item = item
+URL = 'http://apis.data.go.kr/9710000/NationalAssemblyInfoService'
 
+# 파라미터
+SERVICEKEY = 'vcEXNHaIWXxS5Uz3hGYV%2FQKGjcxzIfqEvuV5Arl0yB66fMYdch6oxV1bMuTLSC7jXzr03Xzt1NkBrDBBzYIe2Q%3D%3D'
 
 class MainApp():
     def __init__(self):
@@ -40,11 +40,7 @@ class MainApp():
         self.frames = []
         
         # 요청 URL과 오퍼레이션
-        URL = 'http://apis.data.go.kr/9710000/NationalAssemblyInfoService'
-        OPERATION = 'getMemberCurrStateList' # 국경일 + 공휴일 정보 조회 오퍼레이션
-
-        # 파라미터
-        SERVICEKEY = 'vcEXNHaIWXxS5Uz3hGYV%2FQKGjcxzIfqEvuV5Arl0yB66fMYdch6oxV1bMuTLSC7jXzr03Xzt1NkBrDBBzYIe2Q%3D%3D'
+        OPERATION = 'getMemberCurrStateList'
         PARAMS = {'numOfRows':'300', 'pageNo':'1'}
 
         request_query = get_request_query(URL, OPERATION, PARAMS, SERVICEKEY)
@@ -82,11 +78,13 @@ class MainApp():
     def set_frame_show_info(self):
         self.frames.append(tk.Frame(self.window))
         self.frames[-1].grid(row=1, column=0)
-        photoimg = ImageTk.PhotoImage(file = "AsteroidSprite.png")
-        self.face_photo = tk.Label(self.frames[-1], image=photoimg)
+        self.face_photo = tk.Label(self.frames[-1])
         self.face_photo.grid(row=1, column=2)
+        self.name_label = tk.Label(self.frames[-1])
+        self.name_label.grid(row=2, column=2)
         self.info_label= tk.Label(self.frames[-1])
-        self.info_label.grid(row=2, column=2)
+        self.info_label.grid(row=1, column=3)
+        self.button_article = tk.Button(self.frames[-1])
         self.frames[-1].grid_remove()
 
     def frame_change(self, i):
@@ -104,8 +102,12 @@ class MainApp():
                 origNm = item.find("origNm").text
                 if origNm == info:
                     self.set_image_label(item.find("jpgLink").text)
-                    self.info_label['text'] = item.find("empNm").text + '(' + item.find("engNm").text + ')\n' + origNm \
-                        + '\n' + item.find("reeleGbnNm").text
+                    detail_item =  self.parse_detail(item)
+                    self.name_label["text"] = detail_item.find("empNm").text + '\n(' + detail_item.find("engNm").text + ', ' + detail_item.find('hjNm').text + ')'
+                    self.info_label['text'] = detail_item.find("polyNm").text + ', ' + detail_item.find("origNm").text + '\n' \
+                        + detail_item.find("reeleGbnNm").text + ', ' + detail_item.find("electionNum").text + '\n' \
+                        + detail_item.find("shrtNm").text + '\n' + detail_item.find("assemHomep").text + '\n' \
+                        + detail_item.find("assemEmail").text + '\n' + detail_item.find("assemTel").text
                     break
 
     def search_member_show_list(self):
@@ -124,7 +126,17 @@ class MainApp():
         photo = ImageTk.PhotoImage(temp)
         self.face_photo.configure(image=photo)
         self.face_photo.image = photo
-        
+
+    def parse_detail(self, item):
+        OPERATION = 'getMemberDetailInfoList'
+        PARAMS = {'numOfRows':'1', 'pageNo':'1', 'dept_cd': item.find("deptCd").text , 'num': item.find("num").text }
+        request_query = get_request_query(URL, OPERATION, PARAMS, SERVICEKEY)
+        response = requests.get(url=request_query)
+        mdi_et = ET.fromstring(response.text).find('body').find('item')
+        for info in mdi_et:
+            print(info.text)
+        return mdi_et
+
 
 #root = Tk()
 some = MainApp()
