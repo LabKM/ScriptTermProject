@@ -62,9 +62,18 @@ def getDataDetail(index):
         res_list.append((info.tag, info.text))
     return res_list
 
+def getPhotoUrl(index):
+    return list_current_searched_mem[int(index) - 1].find("jpgLink").text
+
 def sendMessage(user, msg):
     try:
         bot.sendMessage(user, msg)
+    except:
+        traceback.print_exc(file=sys.stdout)
+
+def sendPhoto(user, photo_url):
+    try:
+        bot.sendPhoto(user, photo_url)
     except:
         traceback.print_exc(file=sys.stdout)
 

@@ -51,11 +51,16 @@ def replyMemDataDetail(user, param_index):
     print(user, param_index)
     res_list = noti.getDataDetail(param_index)
     msg = ''
+    if len(res_list) > 1:
+        noti.sendPhoto(user, noti.getPhotoUrl(param_index))
     for res in res_list:
-        if res[0] != 'jpgLink':
+        if res[0] != "memTitle":
             msg += tagSet[res[0]] + ': ' + res[1] + '\n'
-        else:
-            pass
+    if msg:
+        noti.sendMessage(user, msg)
+    else:
+        noti.sendMessage(user, "잘못된 인덱스입니다.")
+
 
 def save( user, loc_param ):
     conn = sqlite3.connect('users.db')
