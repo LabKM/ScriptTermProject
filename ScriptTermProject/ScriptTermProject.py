@@ -4,16 +4,19 @@
 #기능 
 # 1. 지역구 입력으로 국회의원 정보 가져오기
 # 2. 국회의원의 최근 활동 보기
-# 3. 국회의원 사무실 위치 보기
+# 3. 국회의원 사무실 각종 정보 보기 
 # 4. 국회의원 사무실로 이메일 전송
-# 5. 국회의원 자기 지역구 이외에도 자신이 원하는 국회의원들 관심 등록 기능
+# 5. 저서 확인하기
 
 import tkinter as tk
+from tkinter import font
+from tkinter import messagebox
 import urllib
 import requests
 import xml.etree.ElementTree as ET
 from PIL import ImageTk, Image
 from io import BytesIO
+import webbrowser
 
 def get_request_query(url, operation, params, serviceKey):
     import urllib.parse as urlparse
@@ -29,6 +32,15 @@ URL = 'http://apis.data.go.kr/9710000/NationalAssemblyInfoService'
 
 # 파라미터
 SERVICEKEY = 'vcEXNHaIWXxS5Uz3hGYV%2FQKGjcxzIfqEvuV5Arl0yB66fMYdch6oxV1bMuTLSC7jXzr03Xzt1NkBrDBBzYIe2Q%3D%3D'
+
+#tag match
+tagSet = {
+    "empNm" : "의원이름", "hjNm" : "한자이름", "engNM": "영문이름", "bthDate": "생년월일",
+    "polyNm" : "소속정당", "origNm" : "선거구", "shrtNm" : "소속위원회", "reeleGbnNm" : "당선횟수",
+    "electionNum":"당선대수", "assemTel": "사무실전화", "assemHomep":"홈페이지", "assemEmail":"이메일",
+    "staff":"보좌관", "secretary2":"비서관", "secretary":"비서", "hbbyCd":"취미", "examCd":"특기",
+    "memTitle":"약력"
+    }
 
 class MainApp():
     def __init__(self):
@@ -50,9 +62,15 @@ class MainApp():
 
         tk.Button(self.frame0,text="Home",command=lambda X=0: self.frame_change(X)).pack(side=tk.LEFT)
 
+        self.fontstyle_name = font.Font(self.window, size=10, weight='bold', family='Consolas')
+        self.fontstyle_info = font.Font(self.window, size=16, weight='bold', family='Consolas')
+        self.fontstyle_button = font.Font(self.window, size=12, weight='bold', family='Consolas')
+
         self.now_frame = 0
         self.set_frame_search()
         self.set_frame_show_info()
+        self.set_frame_aticle()
+        self.set_frame_current_sesstion()
 
         self.frames[self.now_frame].grid()
         self.frames[self.now_frame].tkraise()
@@ -73,6 +91,7 @@ class MainApp():
         self._0_listbox.grid(row=1,column=0) 
         self._0_detail_button = tk.Button(self.frames[-1], text="자세히", command=self.show_detail_member)
         self._0_detail_button.grid(row=2, column=0)
+        self.now_member = None
         self.frames[-1].grid_remove()
 
     def set_frame_show_info(self):
@@ -80,11 +99,39 @@ class MainApp():
         self.frames[-1].grid(row=1, column=0)
         self.face_photo = tk.Label(self.frames[-1])
         self.face_photo.grid(row=1, column=2)
-        self.name_label = tk.Label(self.frames[-1])
+        self.name_label = tk.Label(self.frames[-1], font = self.fontstyle_name)
         self.name_label.grid(row=2, column=2)
-        self.info_label= tk.Label(self.frames[-1])
+        self.info_label= tk.Label(self.frames[-1], font = self.fontstyle_info)
         self.info_label.grid(row=1, column=3)
-        self.button_article = tk.Button(self.frames[-1])
+        self.button_current = tk.Button(self.frames[-1], text="최근 활동 보기", font=self.fontstyle_button, command=self.show_current_session)
+        self.button_current.grid(row=3, column=2)
+        self.button_homepage = tk.Button(self.frames[-1], text="홈페이지 가보기", font=self.fontstyle_button, command=self.go_homepage)
+        self.button_homepage.grid(row=3, column=3)
+        self.frames[-1].grid_remove()
+
+    def set_frame_aticle(self):
+        self.frames.append(tk.Frame(self.window))        
+        self.face_photo_aticle = tk.Label(self.frames[-1])
+        self.face_photo_aticle.grid(row=1, column=2)
+        self.name_label_aticle = tk.Label(self.frames[-1], font = self.fontstyle_name)
+        self.name_label_aticle.grid(row=2, column=2)
+        self.aticle_page = 0
+        self.aticle_labels = []
+        self.button_back_info = tk.Button(self.frames[-1], text="의원 정보", font=self.fontstyle_button, command=lambda : self.frame_change(1))
+        self.button_back_info.grid(row=4, column=2)
+        self.frames[-1].grid_remove()
+
+    def set_frame_current_sesstion(self):
+        self.frames.append(tk.Frame(self.window))        
+        self.frames[-1].grid(row=1,column=0)
+        self.face_photo_sesstion = tk.Label(self.frames[-1])
+        self.face_photo_sesstion.grid(row=1, column=2)
+        self.name_label_sesstion = tk.Label(self.frames[-1], font = self.fontstyle_name)
+        self.name_label_sesstion.grid(row=2, column=2)
+        self.sesstion_page = 0
+        self.sesstion_labels = []
+        self.button_back_info = tk.Button(self.frames[-1], text="의원 정보", font=self.fontstyle_button, command=lambda : self.frame_change(1))
+        self.button_back_info.grid(row=3, column=2)
         self.frames[-1].grid_remove()
 
     def frame_change(self, i):
@@ -104,11 +151,45 @@ class MainApp():
                     self.set_image_label(item.find("jpgLink").text)
                     detail_item =  self.parse_detail(item)
                     self.name_label["text"] = detail_item.find("empNm").text + '\n(' + detail_item.find("engNm").text + ', ' + detail_item.find('hjNm').text + ')'
-                    self.info_label['text'] = detail_item.find("polyNm").text + ', ' + detail_item.find("origNm").text + '\n' \
-                        + detail_item.find("reeleGbnNm").text + ', ' + detail_item.find("electionNum").text + '\n' \
-                        + detail_item.find("shrtNm").text + '\n' + detail_item.find("assemHomep").text + '\n' \
-                        + detail_item.find("assemEmail").text + '\n' + detail_item.find("assemTel").text
+                    info_text = ''
+                    for some in detail_item:
+                        if some.tag == "polyNm" or some.tag == "origNm" or some.tag == "reeleGbnNm" or  \
+                            some.tag == "electionNum" or some.tag == "shrtNm" or some.tag == "assemHomep" or \
+                            some.tag == "assemEmail" or some.tag == "assemTel":
+                            info_text += tagSet[some.tag] + ' ' + some.text + '\n'
+                    self.info_label['text'] = info_text
+                    self.aticle_page = 1
+                    self.now_member = detail_item
                     break
+
+    def show_aticle(self):
+        self.frame_change(2)
+        self.face_photo_aticle.configure(image=self.face_photo['image'])
+        self.face_photo_aticle.image = self.face_photo['image']
+        self.name_label_aticle['text'] = self.name_label['text']
+        OPERATION = 'getPressAticle'
+        PARAMS = {'numOfRows':'10', 'pageNo': str(self.aticle_page), 'hg_nm': self.now_member.find("empNm").text }
+        request_query = get_request_query(URL, OPERATION, PARAMS, SERVICEKEY)
+        response = requests.get(url=request_query)
+        aticles = ET.fromstring(response.text).find('body').find('items')
+        for label in self.aticle_labels:
+            label.destroy()
+        for aticle in aticles:
+            self.aticle_labels.append(tk.Label(self.frames[2], font = self.fontstyle_info, text=aticle.find("title").text))
+            self.aticle_labels[-1].bind("<Button-1>", lambda : webbrowser.open_new(aticle.find("url").text))
+            self.aticle_labels[-1].grid(row=3, column=2)
+
+    def go_homepage(self):
+        if(self.now_member.find("assemHomep") != None):
+            webbrowser.open_new(self.now_member.find("assemHomep").text)
+        else:
+            messagebox.showinfo("No Homepage", "해당 국회의원은 홈페이지 정보가 존재하지 않습니다.")
+
+    def show_current_session(self):
+        self.frame_change(3)
+        self.face_photo_sesstion.configure(image=self.face_photo['image'])
+        self.face_photo_sesstion.image = self.face_photo['image']
+        self.name_label_sesstion['text'] = self.name_label['text']
 
     def search_member_show_list(self):
         self._0_listbox.delete(0, tk.END)
@@ -133,8 +214,6 @@ class MainApp():
         request_query = get_request_query(URL, OPERATION, PARAMS, SERVICEKEY)
         response = requests.get(url=request_query)
         mdi_et = ET.fromstring(response.text).find('body').find('item')
-        for info in mdi_et:
-            print(info.text)
         return mdi_et
 
 
