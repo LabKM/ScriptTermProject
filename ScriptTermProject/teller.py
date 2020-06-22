@@ -39,6 +39,7 @@ def replyMemDataByName(user, param):
     print(user, param)
     res_list = noti.getDataByName( param )
     msg = ''
+    cnt = 1
     for res in res_list:
         msg += str(cnt) + '. ' + res + '\n'
         cnt += 1
@@ -51,8 +52,9 @@ def replyMemDataDetail(user, param_index):
     print(user, param_index)
     res_list = noti.getDataDetail(param_index)
     msg = ''
-    if len(res_list) > 1:
-        noti.sendPhoto(user, noti.getPhotoUrl(param_index))
+    photoUrl = noti.getPhotoUrl(param_index)
+    if len(res_list) > 1 and photoUrl is not None:
+        noti.sendPhoto(user, photoUrl)
     for res in res_list:
         if res[0] != "memTitle":
             msg += tagSet[res[0]] + ': ' + res[1] + '\n'
@@ -110,7 +112,7 @@ def handle(msg):
     #    print('try to 확인')
     #    check( chat_id )
     else:
-        noti.sendMessage(chat_id, '모르는 명령어입니다.\n지역 [지역이름], 이름 [한글이름], 보기 [지역/이름 검색 후 번호로 검색] 중 하나의 명령을 입력하세요.')
+        noti.sendMessage(chat_id, '모르는 명령어입니다.\n지역 [지역이름], 이름 [한글이름], 보기 [한글이름] 중 하나의 명령을 입력하세요.')
 
 
 today = date.today()
