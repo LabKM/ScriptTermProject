@@ -7,7 +7,6 @@
 # 3. 국회의원 사무실 각종 정보 보기 
 # 4. 최근 활동 정보
 # 5. 저서 확인하기
-
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import font
