@@ -50,8 +50,8 @@ def replyMemDataByName(user, param):
 
 def replyMemDataDetail(user, param_index):
     print(user, param_index)
-    res_list = noti.getDataDetail(param_index)
-    msg = ''
+    res_list = noti.getDataDetail(param_index) # Data Form list[ (tag, text) ]  text and tag are string
+    msg = '' 
     photoUrl = noti.getPhotoUrl(param_index)
     if len(res_list) > 1 and photoUrl is not None:
         noti.sendPhoto(user, photoUrl)
@@ -61,8 +61,39 @@ def replyMemDataDetail(user, param_index):
     if msg:
         noti.sendMessage(user, msg)
     else:
-        noti.sendMessage(user, "잘못된 인덱스입니다.")
+        noti.sendMessage(user, "잘못된 검색 키워드입니다.")
 
+def replyMemTitle(user, param_name):
+    print(user, param_name)
+    res_list = noti.getDataDetail(param_name)
+    msg = ''
+    last_msg = '약력 없음'
+    for res in res_list:
+        if res[0] == "empNm" or res[0] == "bthDate" or res[0] == "bthDate" or\
+           res[0] == "polyNm" or res[0] == "origNm" or res[0] == "shrtNm" or\
+           res[0] == "hbbyCd" or res[0] == "examCd":
+            msg += tagSet[res[0]] + ': ' + res[1] + '\n'
+        elif res[0] == "memTitle":
+            last_msg = '-약력-\n' + res[1] + '\n'
+    msg += last_msg
+    if msg:
+        noti.sendMessage(user, msg)
+    else:
+        noti.sendMessage(user, "잘못된 검색 키워드입니다.")
+
+def replyMemBook(user, param_name):
+    print(user, param_name)
+    res_list = noti.getBookInfomation(param_name)
+    if len(res_list) > 0:
+        for book in res_list:
+            msg = ''
+            noti.sendPhoto(book[-1])
+            for i in range(len(book) - 1):
+                msg += book[i] + '\n'
+            if msg:
+                noti.sendMessage(user, msg)
+    else:
+        noti.sendMessage(user, '저서가 없거나 해당 잘못된 국회의원 이름입니다.')
 
 def save( user, loc_param ):
     conn = sqlite3.connect('users.db')
@@ -105,6 +136,12 @@ def handle(msg):
     elif text.startswith('보기') and len(args)>1:
         print('try to 보기', args[1])
         replyMemDataDetail( chat_id, args[1] )
+    elif text.startswith('약력') and len(args) > 1:
+        print("try to 약력")
+        replyMemTitle( chat_id, args[1] )
+    elif text.startswith("저서") and len(args) > 1:
+        print("try to 저서")
+        replyMemBook(chat_id, args[1])
     #elif text.startswith('저장')  and len(args)>1:
     #    print('try to 저장', args[1])
     #    save( chat_id, args[1] )
@@ -112,7 +149,8 @@ def handle(msg):
     #    print('try to 확인')
     #    check( chat_id )
     else:
-        noti.sendMessage(chat_id, '모르는 명령어입니다.\n지역 [지역이름], 이름 [한글이름], 보기 [한글이름] 중 하나의 명령을 입력하세요.')
+        noti.sendMessage(chat_id, '모르는 명령어입니다.\n \
+         가능한 명령어 : 지역 [지역이름], 이름 [한글이름], 보기 [한글이름], 약력 [한글이름]...등')
 
 
 today = date.today()

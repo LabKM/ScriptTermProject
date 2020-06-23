@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import re
 from datetime import date, datetime, timedelta
 import traceback
+import urllib
 
 key = 'vcEXNHaIWXxS5Uz3hGYV%2FQKGjcxzIfqEvuV5Arl0yB66fMYdch6oxV1bMuTLSC7jXzr03Xzt1NkBrDBBzYIe2Q%3D%3D'
 TOKEN = '1243598590:AAEBbKIqMfkBsKdf7D8aLHqiDxfXHHH0YCI'
@@ -44,7 +45,7 @@ def getDataByName( name_param ):
 def getDataDetail( name_param ):
     res_list = []
     for item in mem_tree:
-        if name_param in item.find("empNm").text:
+        if name_param == item.find("empNm").text:
             url = get_request_query(baseurl, 'getMemberDetailInfoList',
                                    {'numOfRows':'300', 'pageNo':'1', 'dept_cd': item.find("deptCd").text , 'num': item.find("num").text }, key)
             response = requests.get(url=url)
@@ -54,9 +55,50 @@ def getDataDetail( name_param ):
             break;
     return res_list
 
+def getBookInfomation( name_param ):
+    res_list = [] # list [ (저자, 제목, 내용, 출판사, 출판일, 이미지 파일경로), ... ]
+    client_id = "0imDB_aqj8YSmssymgCT"
+    client_secret = "z9JHpcE_yv"
+    encText = urllib.parse.quote(name_param)
+    encAuthour = urllib.parse.quote(name_param)
+    url = "https://openapi.naver.com/v1/search/book_adv.xml?query=" + encText + "&display=3&sort=date&d_auth="+encAuthour # xml 결과
+    request = urllib.request.Request(url)
+    request.add_header("X-Naver-Client-Id",client_id)
+    request.add_header("X-Naver-Client-Secret",client_secret)
+    response = urllib.request.urlopen(request)
+    response_body = response.read()
+    book_info_tree = ET.fromstring(response_body.decode('utf-8')).find('channel')
+    for info in book_info_tree:
+        if info.tag == "item":
+            temp = (
+                info.find("author").text, info.find("title").text, info.find("description").text, 
+                info.find('publisher').text, info.find('pubdate').text, info.find('link').text,
+                info.find("price").text, info.find('image').text
+                )
+            res_list.append( [t.replace("<b>", '').replace("</b>", '') for t in temp] )
+    return res_list
+
+def getAticleData( name_param ):
+    client_id = "0imDB_aqj8YSmssymgCT"
+    client_secret = "z9JHpcE_yv"
+    encText = urllib.parse.quote(name_param + ' 국회의원')
+    url = "https://openapi.naver.com/v1/search/news.xml?query=" + encText # xml 결과
+    request = urllib.request.Request(url)
+    request.add_header("X-Naver-Client-Id",client_id)
+    request.add_header("X-Naver-Client-Secret",client_secret)
+    response = urllib.request.urlopen(request)
+    response_body = response.read()
+    book_info_tree = ET.fromstring(response_body.decode('utf-8')).find('channel')
+    res_list = [] # list [ (제목, 내용, 기사 일자, 링크), ... ]
+    for info in book_info_tree:
+        if info.tag == "item":
+            temp = (info.find("title").text, info.find("description").text, info.find("pubDate").text, info.find('link').text)
+            res_list.append( [t.replace("<b>", '').replace("</b>", '') for t in temp] )
+    return res_list
+
 def getPhotoUrl(name):
     for item in mem_tree:
-        if name in item.find("empNm").text:
+        if name == item.find("empNm").text:
             return item.find("jpgLink").text
     return None
 
