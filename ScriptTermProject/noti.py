@@ -96,6 +96,14 @@ def getAticleData( name_param ):
             res_list.append( [t.replace("<b>", '').replace("</b>", '') for t in temp] )
     return res_list
 
+def getBillData( name_param ):#return list[ (의안 번호, 의안명, 처리 구분, 심사 진행 상태, 의안 발의 날짜, 발의 의원, 의안 결과(옵션), 주요내용(옵션)) ]
+    url = get_request_query('http://apis.data.go.kr/9710000/BillInfoService2', 'getBillInfoList', 
+                            {'numOfRows':'10', 'pageNo':'1', 'mem_name':name_param, 'ord':'21', 'start_ord':'21', 'end_ord':'21', 'gbn':'dae_num_name' }, 
+                            'vcEXNHaIWXxS5Uz3hGYV%2FQKGjcxzIfqEvuV5Arl0yB66fMYdch6oxV1bMuTLSC7jXzr03Xzt1NkBrDBBzYIe2Q%3D%3D')
+    res_body = requests.get(url=url)
+    mem_tree = ET.fromstring(res_body.text).find("body").find("items")
+    return mem_tree
+
 def getPhotoUrl(name):
     for item in mem_tree:
         if name == item.find("empNm").text:

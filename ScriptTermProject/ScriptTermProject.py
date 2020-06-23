@@ -5,7 +5,7 @@
 # 1. 지역구 입력으로 국회의원 정보 가져오기
 # 2. 국회의원의 최근 활동 보기
 # 3. 국회의원 사무실 각종 정보 보기 
-# 4. 최근 활동 정보
+# 4. 의안 알아보기
 # 5. 저서 확인하기
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -114,6 +114,7 @@ class MainApp():
 
         self.set_frame_book_search()
         self.set_frame_aticle()
+        self.set_frame_bill()
 
         self.button_homepage = tk.Button(frame_note, text="홈페이지 가보기", font=self.fontstyle_button, command=self.go_homepage)
         self.button_homepage.grid(row=1, column=0)
@@ -132,6 +133,13 @@ class MainApp():
         self.TmemAticle = tk.Text(frame_aticle,font=self.fontstyle_detail_info)
         self.TmemAticle.grid(row=0, column=0)
         self.TmemAticle['state'] = 'disabled'
+
+    def set_frame_bill(self):
+        frame_bill = tk.Frame(self.frames[-1])
+        self.notebook.add(frame_bill, text='관련 의안')
+        self.TmemBill = tk.Text(frame_bill,font=self.fontstyle_detail_info)
+        self.TmemBill.grid(row=0, column=0)
+        self.TmemBill['state'] = 'disabled'
 
     def frame_change(self, i):
         self.frames[self.now_frame].grid_remove()
@@ -157,6 +165,7 @@ class MainApp():
             self.show_member_title()
             self.show_member_book()
             self.show_aticle()
+            self.show_member_bill()
         else:
             self.frame_change(0)
 
@@ -220,6 +229,22 @@ class MainApp():
                 msg += book[i] + '\n'
             self.TmemBook.insert(tk.END, msg)     
         self.TmemBook['state'] = 'disabled'
+
+    def show_member_bill(self):
+        self.TmemBill['state'] = 'normal'
+        self.TmemBill.delete('1.0', tk.END)
+        bill_info_tree = noti.getBillData(self.now_member.find("empNm").text)
+        for bill_info in bill_info_tree:
+            msg = bill_info.find("billName").text
+            msg += '의안 번호: ' + bill_info.find("billNo").text + '\n'
+            msg += '의안 구분: ' + bill_info.find("passGubn").text + '\n'
+            msg += '심사 진행 상태: ' + bill_info.find("procStageCd").text + '\n'
+            msg += '발의일' + bill_info.find("proposeDt").text + '\n'
+            if bill_info.find("summary") is not None:
+                msg += bill_info.find("summary").text + '\n'
+            self.TmemBill.insert(tk.END, msg)
+        self.TmemBill['state'] = 'disabled'
+
 
     def search_member_show_list(self):
         self._0_listbox.delete(0, tk.END)
